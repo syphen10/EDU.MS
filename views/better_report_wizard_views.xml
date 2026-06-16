@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_better_report_wizard_form" model="ir.ui.view">
+        <field name="name">better.report.wizard.form</field>
+        <field name="model">better.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-info text-center" invisible="interactive_html_file">
+                    <h3>Ready to Compile</h3>
+                    <p>Inject live Odoo 19 data into the Prism Engine.</p>
+                </div>
+                <div class="alert alert-success text-center" invisible="not interactive_html_file">
+                    <h3>Compilation Complete!</h3>
+                    <field name="interactive_html_file" filename="interactive_filename" readonly="1" widget="binary"/>
+                </div>
+                <field name="interactive_filename" invisible="1"/>
+                <footer>
+                    <button name="action_generate_interactive_report" string="Compile &amp; Download" type="object" class="btn-primary" invisible="interactive_html_file"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
