@@ -5,7 +5,8 @@ class BetterReport(models.Model):
     _description = 'Custom Report Template'
 
     name = fields.Char(string='Report Name', required=True)
-    model_id = fields.Many2one('ir.model', string='Data Model', required=True)
+    # The fix is on the line below:
+    model_id = fields.Many2one('ir.model', string='Data Model', required=True, ondelete='cascade')
     model_name = fields.Char(related='model_id.model', store=True)
     field_ids = fields.Many2many('ir.model.fields', string='Columns', domain="[('model_id', '=', model_id)]")
     record_limit = fields.Integer(string='Row Limit', default=500)
