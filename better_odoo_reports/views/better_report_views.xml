@@ -27,7 +27,7 @@
     <record id="action_better_report" model="ir.actions.act_window">
         <field name="name">Better Reports</field>
         <field name="res_model">better.report</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
     <menuitem id="menu_better_report_root" name="Better Reports" sequence="99"/>
