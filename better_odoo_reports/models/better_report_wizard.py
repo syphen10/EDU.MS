@@ -219,4 +219,115 @@ class BetterReportWizard(models.TransientModel):
                             </div>
                             <div class="prism-card rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden animate-enter delay-300 spotlight">
                                 <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#00FF9D]/10 blur-[40px] rounded-full transition-transform duration-700 hover:scale-150"></div>
-                                <span class="text-[11px] font-medium text-[#71
+                                <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Capital Aggregation</span>
+                                <div class="flex items-baseline gap-2 mt-2 relative z-10">
+                                    <span class="text-[13px] font-mono text-[#71717A] tracking-widest">VAL</span>
+                                    <div class="text-[48px] font-semibold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-[#00FF9D] to-[#00B36E] leading-none transition-all duration-300" id="kpi-val">0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prism-card rounded-[24px] overflow-hidden flex flex-col animate-enter delay-400 spotlight">
+                        <div class="px-8 py-5 border-b border-white/[0.06] flex justify-between items-center bg-black/20 relative z-10">
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-[14px] font-semibold text-white tracking-wide">Output Matrix</h2>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto relative z-10">
+                            <table class="w-full text-left whitespace-nowrap">
+                                <thead id="table-head">
+                                    <tr>
+                                        </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <script>
+                // Odoo injects the JSON here
+                window.ODOO_DATA = REPLACE_ME_WITH_DATA;
+                window.ODOO_KPIS = REPLACE_ME_WITH_KPIS;
+
+                document.querySelectorAll('.spotlight').forEach(el => {
+                    el.addEventListener('mousemove', e => {
+                        const rect = el.getBoundingClientRect();
+                        el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                        el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                    });
+                });
+
+                document.addEventListener("DOMContentLoaded", () => {
+                    // Update KPIs
+                    document.getElementById('kpi-pos').innerText = window.ODOO_KPIS.total_records.toLocaleString();
+                    document.getElementById('kpi-val').innerText = window.ODOO_KPIS.total_capital.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+                    const data = window.ODOO_DATA;
+                    if (data.length === 0) return;
+
+                    const headers = Object.keys(data[0]);
+                    
+                    // Render Active Columns Pill
+                    const columnContainer = document.getElementById('selected-columns');
+                    headers.forEach(h => {
+                        const pill = document.createElement('div');
+                        pill.className = "bg-[rgba(0,0,0,0.4)] border border-white/[0.08] text-white px-3 py-1.5 rounded-xl flex items-center gap-2 relative z-10";
+                        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.8)]"></span> <span class="font-medium text-[13px] text-[#E4E4E7]">${h.replace(/_/g, ' ')}</span>`;
+                        columnContainer.appendChild(pill);
+                    });
+
+                    // Render Table Headers
+                    const theadRow = document.querySelector('#table-head tr');
+                    headers.forEach(h => {
+                        const th = document.createElement('th');
+                        th.className = "px-8 py-4 text-[10px] font-semibold text-[#71717A] uppercase tracking-[0.2em] border-b border-white/[0.04]";
+                        th.innerText = h.replace(/_/g, ' ');
+                        theadRow.appendChild(th);
+                    });
+
+                    // Render Table Rows
+                    const tbody = document.getElementById('table-body');
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-white/[0.03] transition-colors group";
+                        
+                        headers.forEach((h, index) => {
+                            const td = document.createElement('td');
+                            
+                            if (index === 0) {
+                                td.className = "px-8 py-5 text-[#E4E4E7] font-medium border-b border-white/[0.02] flex items-center gap-3";
+                                td.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.8)] group-hover:animate-pulse"></span>${row[h] !== null ? row[h] : ''}`;
+                            } else {
+                                td.className = "px-8 py-5 text-[#A1A1AA] border-b border-white/[0.02] group-hover:text-white transition-colors";
+                                td.innerText = row[h] !== null ? row[h] : '';
+                            }
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                });
+            </script>
+        </body>
+        </html>
+        """
+
+        html_content = html_content.replace('REPLACE_ME_WITH_DATA', json_data)
+        html_content = html_content.replace('REPLACE_ME_WITH_KPIS', kpi_data)
+
+        self.write({
+            'interactive_html_file': base64.b64encode(html_content.encode('utf-8')),
+            'interactive_filename': f'{report.name.replace(" ", "_")}_Prism.html',
+        })
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'better.report.wizard',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
