@@ -1,6 +1,7 @@
 from odoo import models, fields
 import base64
 import json
+from datetime import datetime, date
 
 class BetterReportWizard(models.TransientModel):
     _name = 'better.report.wizard'
@@ -24,15 +25,25 @@ class BetterReportWizard(models.TransientModel):
             row = {}
             for fname in field_names:
                 val = rec.get(fname, '')
+                
+                # Clean up relational fields
                 if isinstance(val, tuple): 
                     val = val[1]
+                
+                # THE FIX: Convert Date/Time to Strings
+                if isinstance(val, (datetime, date)):
+                    val = str(val)
+                
+                # Handle empty values
                 if val is False or val is None:
                     val = ""
                     
                 row[fname] = val
                 
+                # Aggregate totals
                 if isinstance(val, (int, float)):
                     total_amount += float(val)
+                    
             report_data.append(row)
 
         json_data = json.dumps(report_data)
