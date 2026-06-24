@@ -183,3 +183,147 @@ class BetterReportWizard(models.TransientModel):
                             </div>
                         </div>
                     </div>
+
+                    <div class="pro-card flex flex-col w-full max-w-full overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white relative z-10">
+                            <h2 class="text-[15px] font-bold text-slate-900 tracking-tight">Output Matrix</h2>
+                        </div>
+                        
+                        <div class="overflow-x-auto w-full relative z-10 max-h-[600px] overflow-y-auto">
+                            <table class="w-full text-left whitespace-nowrap min-w-max">
+                                <thead id="table-head" class="bg-slate-50/90 backdrop-blur-sm sticky top-0 z-20 shadow-sm"><tr></tr></thead>
+                                <tbody id="table-body" class="divide-y divide-slate-100 bg-white"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <script>
+                window.ODOO_DATA = REPLACE_ME_WITH_DATA;
+                window.ODOO_KPIS = REPLACE_ME_WITH_KPIS;
+                const data = window.ODOO_DATA;
+
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.getElementById('kpi-pos').innerText = window.ODOO_KPIS.total_records.toLocaleString();
+                    document.getElementById('kpi-val').innerText = window.ODOO_KPIS.total_capital.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+                    if (data.length === 0) return;
+
+                    const sidebarList = document.getElementById('schema-sidebar-list');
+                    let currentHeaders = Object.keys(data[0]);
+
+                    function renderTable(headersList) {
+                        const theadRow = document.querySelector('#table-head tr');
+                        const tbody = document.getElementById('table-body');
+                        theadRow.innerHTML = '';
+                        tbody.innerHTML = '';
+
+                        headersList.forEach(h => {
+                            const th = document.createElement('th');
+                            th.className = "px-6 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200";
+                            th.innerText = h.replace(/_/g, ' ');
+                            theadRow.appendChild(th);
+                        });
+
+                        data.forEach(row => {
+                            const tr = document.createElement('tr');
+                            tr.className = "hover:bg-slate-50/80 transition-colors group";
+                            
+                            headersList.forEach((h, index) => {
+                                const td = document.createElement('td');
+                                if (index === 0) {
+                                    td.className = "px-6 py-4 text-[13px] text-slate-900 font-semibold";
+                                } else {
+                                    td.className = "px-6 py-4 text-[13px] text-slate-600 font-medium";
+                                }
+                                td.innerText = row[h] !== null ? row[h] : '';
+                                tr.appendChild(td);
+                            });
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    function renderSidebar(headersList) {
+                        sidebarList.innerHTML = '';
+                        headersList.forEach((h, index) => {
+                            const li = document.createElement('li');
+                            li.className = "flex items-center p-2.5 bg-white border border-slate-200 rounded-lg cursor-grab hover:border-slate-300 hover:shadow-sm transition-all group";
+                            li.draggable = true;
+                            li.dataset.header = h;
+                            
+                            li.innerHTML = `
+                                <div class="mr-3 text-slate-300 group-hover:text-slate-400 transition-colors cursor-grab">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"></path></svg>
+                                </div>
+                                <div class="flex items-center gap-2 overflow-hidden flex-1">
+                                    <span class="text-[10px] font-bold text-slate-400 w-3 text-right shrink-0">${index + 1}.</span>
+                                    <span class="text-[12px] font-semibold text-slate-700 truncate capitalize">${h.replace(/_/g, ' ')}</span>
+                                </div>
+                            `;
+
+                            li.addEventListener('dragstart', (e) => {
+                                li.classList.add('dragging');
+                                e.dataTransfer.effectAllowed = 'move';
+                            });
+                            
+                            li.addEventListener('dragend', () => {
+                                li.classList.remove('dragging');
+                                const newOrder = Array.from(sidebarList.children).map(p => p.dataset.header);
+                                renderTable(newOrder);
+                                renderSidebar(newOrder); 
+                            });
+
+                            sidebarList.appendChild(li);
+                        });
+                    }
+
+                    renderTable(currentHeaders);
+                    renderSidebar(currentHeaders);
+
+                    sidebarList.addEventListener('dragover', e => {
+                        e.preventDefault();
+                        const draggable = document.querySelector('.dragging');
+                        if (!draggable) return;
+                        const afterElement = getDragAfterElement(sidebarList, e.clientY);
+                        if (afterElement == null) {
+                            sidebarList.appendChild(draggable);
+                        } else {
+                            sidebarList.insertBefore(draggable, afterElement);
+                        }
+                    });
+
+                    function getDragAfterElement(container, y) {
+                        const draggableElements = [...container.querySelectorAll('li[draggable="true"]:not(.dragging)')];
+                        return draggableElements.reduce((closest, child) => {
+                            const box = child.getBoundingClientRect();
+                            const offset = y - box.top - box.height / 2;
+                            if (offset < 0 && offset > closest.offset) {
+                                return { offset: offset, element: child };
+                            } else {
+                                return closest;
+                            }
+                        }, { offset: Number.NEGATIVE_INFINITY }).element;
+                    }
+                });
+            </script>
+        </body>
+        </html>
+        """
+
+        html_content = html_content.replace('REPLACE_ME_WITH_DATA', json_data)
+        html_content = html_content.replace('REPLACE_ME_WITH_KPIS', kpi_data)
+        html_content = html_content.replace('REPLACE_ME_WITH_TIME', snapshot_time)
+
+        self.write({
+            'interactive_html_file': base64.b64encode(html_content.encode('utf-8')),
+            'interactive_filename': f'{report.name.replace(" ", "_")}_Prism.html',
+        })
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'better.report.wizard',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
