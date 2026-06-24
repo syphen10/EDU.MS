@@ -26,21 +26,17 @@ class BetterReportWizard(models.TransientModel):
             for fname in field_names:
                 val = rec.get(fname, '')
                 
-                # Clean up relational fields
                 if isinstance(val, tuple): 
                     val = val[1]
                 
-                # Convert Date/Time to Strings
                 if isinstance(val, (datetime, date)):
                     val = str(val)
                 
-                # Handle empty values
                 if val is False or val is None:
                     val = ""
                     
                 row[fname] = val
                 
-                # Aggregate totals
                 if isinstance(val, (int, float)):
                     total_amount += float(val)
                     
@@ -49,7 +45,7 @@ class BetterReportWizard(models.TransientModel):
         json_data = json.dumps(report_data)
         kpi_data = json.dumps({"total_records": len(records), "total_capital": total_amount})
 
-        # --- THE PRISM KINETIC HTML MASTERPIECE v1.2 ---
+        # --- THE PRISM KINETIC HTML MASTERPIECE v1.3 ---
         html_content = """
         <!DOCTYPE html>
         <html lang="en" class="dark">
@@ -60,7 +56,6 @@ class BetterReportWizard(models.TransientModel):
             <script src="https://cdn.tailwindcss.com"></script>
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
             <style>
-                /* Softened Dark Mode Background */
                 body { 
                     font-family: 'Inter', sans-serif; 
                     background-color: #0f1115; 
@@ -75,6 +70,7 @@ class BetterReportWizard(models.TransientModel):
                 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
                 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
+                /* Background Orbs & Flames */
                 @keyframes orbDrift1 {
                     0%, 100% { transform: translate(0, 0) scale(1); }
                     50% { transform: translate(4%, 6%) scale(1.1); }
@@ -84,9 +80,9 @@ class BetterReportWizard(models.TransientModel):
                     50% { transform: translate(-5%, -4%) scale(1.05); }
                 }
                 @keyframes flameDrift {
-                    0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.6; }
-                    50% { transform: translate(3%, -4%) scale(1.1) rotate(3deg); opacity: 0.8; }
-                    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.6; }
+                    0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
+                    50% { transform: translate(3%, -4%) scale(1.1) rotate(3deg); opacity: 1; }
+                    100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
                 }
 
                 .prism-core-1 {
@@ -101,14 +97,22 @@ class BetterReportWizard(models.TransientModel):
                     filter: blur(100px); pointer-events: none; z-index: 0;
                     animation: orbDrift2 30s ease-in-out infinite;
                 }
-                /* New Subtle Purple Flame */
-                .purple-flame {
-                    position: fixed; top: 20%; right: 10%; width: 50vw; height: 70vh;
-                    background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.05) 0%, transparent 65%);
-                    filter: blur(100px); pointer-events: none; z-index: 0;
-                    animation: flameDrift 20s ease-in-out infinite;
+                
+                /* Increased opacity and pushed to the edges */
+                .purple-flame-1 {
+                    position: fixed; bottom: -10%; left: -5%; width: 45vw; height: 55vh;
+                    background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.15) 0%, transparent 65%);
+                    filter: blur(90px); pointer-events: none; z-index: 0;
+                    animation: flameDrift 18s ease-in-out infinite alternate;
+                }
+                .purple-flame-2 {
+                    position: fixed; top: -5%; right: -10%; width: 40vw; height: 50vh;
+                    background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.12) 0%, transparent 60%);
+                    filter: blur(80px); pointer-events: none; z-index: 0;
+                    animation: flameDrift 22s ease-in-out infinite alternate-reverse;
                 }
 
+                /* Grid */
                 @keyframes gridPan {
                     0% { background-position: 0 0, 0 0; }
                     100% { background-position: 60px 60px, 60px 60px; }
@@ -124,6 +128,7 @@ class BetterReportWizard(models.TransientModel):
                     animation: gridPan 40s linear infinite;
                 }
 
+                /* Card Styles */
                 .prism-card {
                     background: rgba(20, 22, 28, 0.6);
                     backdrop-filter: blur(40px) saturate(150%);
@@ -132,6 +137,27 @@ class BetterReportWizard(models.TransientModel):
                     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 24px 48px -12px rgba(0, 0, 0, 0.5);
                     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
                 }
+                .prism-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 32px 64px -12px rgba(0, 0, 0, 0.6);
+                }
+
+                /* RESTORED SPOTLIGHT HOVER ENGINE */
+                .spotlight { position: relative; }
+                .spotlight::after {
+                    content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity 0.3s ease;
+                    /* Subtle purple inner glow */
+                    background: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(168, 85, 247, 0.06), transparent 40%);
+                    z-index: -1; pointer-events: none;
+                }
+                .spotlight::before {
+                    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+                    /* Bright purple/cyan border mask */
+                    background: radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgba(168, 85, 247, 0.5), transparent 40%);
+                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 10;
+                }
+                .spotlight:hover::after, .spotlight:hover::before { opacity: 1; }
                 
                 /* Drag and Drop Ghosting */
                 .dragging { opacity: 0.4; transform: scale(0.95); }
@@ -142,7 +168,8 @@ class BetterReportWizard(models.TransientModel):
 
             <div class="prism-core-1"></div>
             <div class="prism-core-2"></div>
-            <div class="purple-flame"></div>
+            <div class="purple-flame-1"></div>
+            <div class="purple-flame-2"></div>
             <div class="architect-grid"></div>
 
             <aside class="w-[320px] bg-[#12141a]/80 backdrop-blur-3xl border-r border-white/[0.04] flex flex-col h-full shrink-0 z-20 relative">
@@ -161,8 +188,8 @@ class BetterReportWizard(models.TransientModel):
                 <div class="px-7 py-6 flex-1 overflow-y-auto space-y-10">
                     <div>
                         <label class="text-[10px] font-medium text-[#71717A] uppercase tracking-[0.2em] mb-3 block">Data Status</label>
-                        <div class="bg-[rgba(0,0,0,0.3)] border border-white/[0.05] rounded-xl px-4 py-3.5">
-                            <span class="text-[#00E5FF] font-mono text-[13px]">ONLINE & SYNCED</span>
+                        <div class="bg-[rgba(0,0,0,0.3)] border border-white/[0.05] rounded-xl px-4 py-3.5 spotlight">
+                            <span class="text-[#00E5FF] font-mono text-[13px] relative z-10">ONLINE & SYNCED</span>
                         </div>
                     </div>
                 </div>
@@ -177,9 +204,11 @@ class BetterReportWizard(models.TransientModel):
                             <span class="text-[10px] font-mono text-[#00E5FF] uppercase tracking-wider">Live Connection</span>
                         </div>
                     </div>
-                    <button onclick="window.print()" class="text-[13px] font-medium text-[#A1A1AA] hover:text-white transition-colors flex items-center gap-2 px-4 py-2 hover:bg-white/[0.05] rounded-xl">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Export PDF
+                    <button onclick="window.print()" class="text-[13px] font-medium text-[#A1A1AA] hover:text-white transition-colors flex items-center gap-2 px-4 py-2 hover:bg-white/[0.05] rounded-xl spotlight">
+                        <span class="relative z-10 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export PDF
+                        </span>
                     </button>
                 </header>
 
@@ -187,9 +216,9 @@ class BetterReportWizard(models.TransientModel):
                     
                     <div class="grid grid-cols-12 gap-6 mb-6">
                         <div class="col-span-8 flex flex-col gap-6">
-                            <div class="prism-card rounded-[24px] p-8 h-full">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Loaded Dimensions</h3>
+                            <div class="prism-card spotlight rounded-[24px] p-8 h-full">
+                                <div class="flex items-center justify-between mb-6 relative z-10">
+                                    <h3 class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em]">Loaded Dimensions</h3>
                                     <span class="text-[10px] text-[#52525B] font-mono">DRAG TO REORDER</span>
                                 </div>
                                 <div id="selected-columns" class="flex flex-wrap gap-3 relative z-10 min-h-[40px]">
@@ -198,13 +227,11 @@ class BetterReportWizard(models.TransientModel):
                         </div>
 
                         <div class="col-span-4 flex flex-col gap-6">
-                            <div class="prism-card rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
-                                <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#00E5FF]/5 blur-[40px] rounded-full"></div>
+                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
                                 <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Total Records</span>
                                 <div class="text-[56px] font-semibold tracking-tighter text-white mt-1 relative z-10 leading-none" id="kpi-pos">0</div>
                             </div>
-                            <div class="prism-card rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
-                                <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#00FF9D]/5 blur-[40px] rounded-full"></div>
+                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
                                 <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Capital Aggregation</span>
                                 <div class="flex items-baseline gap-2 mt-2 relative z-10">
                                     <span class="text-[13px] font-mono text-[#71717A] tracking-widest">VAL</span>
@@ -214,7 +241,7 @@ class BetterReportWizard(models.TransientModel):
                         </div>
                     </div>
 
-                    <div class="prism-card rounded-[24px] overflow-hidden flex flex-col">
+                    <div class="prism-card spotlight rounded-[24px] overflow-hidden flex flex-col">
                         <div class="px-8 py-5 border-b border-white/[0.04] flex justify-between items-center bg-black/10 relative z-10">
                             <h2 class="text-[14px] font-semibold text-white tracking-wide">Output Matrix</h2>
                         </div>
@@ -233,6 +260,15 @@ class BetterReportWizard(models.TransientModel):
                 window.ODOO_DATA = REPLACE_ME_WITH_DATA;
                 window.ODOO_KPIS = REPLACE_ME_WITH_KPIS;
                 const data = window.ODOO_DATA;
+
+                // Wire up the spotlight tracking engine again
+                document.querySelectorAll('.spotlight').forEach(el => {
+                    el.addEventListener('mousemove', e => {
+                        const rect = el.getBoundingClientRect();
+                        el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                        el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                    });
+                });
 
                 document.addEventListener("DOMContentLoaded", () => {
                     // Update KPIs
@@ -285,11 +321,18 @@ class BetterReportWizard(models.TransientModel):
                     // Create Draggable Dimension Pills
                     currentHeaders.forEach(h => {
                         const pill = document.createElement('div');
-                        pill.className = "bg-[rgba(0,0,0,0.4)] border border-white/[0.08] text-white px-3 py-1.5 rounded-xl flex items-center gap-2 cursor-grab hover:border-[#a855f7]/50 hover:bg-[#a855f7]/10 transition-all select-none";
+                        pill.className = "bg-[rgba(0,0,0,0.4)] border border-white/[0.08] text-white px-3 py-1.5 rounded-xl flex items-center gap-2 cursor-grab hover:border-[#a855f7]/50 hover:bg-[#a855f7]/10 transition-all select-none spotlight";
                         pill.draggable = true;
                         pill.dataset.header = h;
-                        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span> <span class="font-medium text-[13px] text-[#E4E4E7]">${h.replace(/_/g, ' ')}</span>`;
+                        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#a855f7] shadow-[0_0_8px_rgba(168,85,247,0.8)] relative z-10"></span> <span class="font-medium text-[13px] text-[#E4E4E7] relative z-10">${h.replace(/_/g, ' ')}</span>`;
                         
+                        // Re-bind hover to the individual pill so it glows
+                        pill.addEventListener('mousemove', e => {
+                            const rect = pill.getBoundingClientRect();
+                            pill.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                            pill.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                        });
+
                         // Drag Events
                         pill.addEventListener('dragstart', (e) => {
                             pill.classList.add('dragging');
@@ -298,7 +341,6 @@ class BetterReportWizard(models.TransientModel):
                         
                         pill.addEventListener('dragend', () => {
                             pill.classList.remove('dragging');
-                            // Reorder table on drop!
                             const newOrder = Array.from(columnContainer.children).map(p => p.dataset.header);
                             renderTable(newOrder);
                         });
