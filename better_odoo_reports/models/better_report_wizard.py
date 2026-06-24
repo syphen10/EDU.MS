@@ -45,7 +45,7 @@ class BetterReportWizard(models.TransientModel):
         json_data = json.dumps(report_data)
         kpi_data = json.dumps({"total_records": len(records), "total_capital": total_amount})
 
-        # --- THE PRISM KINETIC HTML MASTERPIECE v1.4 ---
+        # --- THE PRISM KINETIC HTML MASTERPIECE v1.5 ---
         html_content = """
         <!DOCTYPE html>
         <html lang="en" class="dark">
@@ -65,10 +65,10 @@ class BetterReportWizard(models.TransientModel):
                 }
                 .font-mono { font-family: 'JetBrains Mono', monospace; }
                 
-                ::-webkit-scrollbar { width: 4px; height: 4px; }
+                ::-webkit-scrollbar { width: 6px; height: 6px; }
                 ::-webkit-scrollbar-track { background: transparent; }
-                ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-                ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+                ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
                 @keyframes orbDrift1 {
                     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -154,7 +154,6 @@ class BetterReportWizard(models.TransientModel):
                 
                 .dragging { opacity: 0.4; transform: scale(0.95); }
                 
-                /* Dropzone highlight */
                 .dropzone-active {
                     border-color: rgba(168, 85, 247, 0.5) !important;
                     background-color: rgba(168, 85, 247, 0.05) !important;
@@ -170,7 +169,7 @@ class BetterReportWizard(models.TransientModel):
             <div class="architect-grid"></div>
 
             <aside class="w-[320px] bg-[#12141a]/80 backdrop-blur-3xl border-r border-white/[0.04] flex flex-col h-full shrink-0 z-20 relative">
-                <div class="h-[84px] flex items-center px-8 border-b border-white/[0.03]">
+                <div class="h-[84px] shrink-0 flex items-center px-8 border-b border-white/[0.03]">
                     <div class="flex items-center gap-3.5">
                         <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-white to-[#A1A1AA] flex items-center justify-center shadow-[0_4px_12px_rgba(255,255,255,0.1)]">
                             <svg class="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
@@ -203,8 +202,8 @@ class BetterReportWizard(models.TransientModel):
                 </div>
             </aside>
 
-            <main class="flex-1 flex flex-col h-full relative z-10">
-                <header class="h-[84px] px-12 flex items-center justify-between border-b border-white/[0.04] bg-transparent z-20">
+            <main class="flex-1 flex flex-col h-full relative z-10 min-w-0">
+                <header class="h-[84px] shrink-0 px-12 flex items-center justify-between border-b border-white/[0.04] bg-transparent z-20">
                     <div class="flex items-center gap-4">
                         <h2 class="text-[22px] font-semibold tracking-tight text-white">Interactive Analytics</h2>
                         <div class="px-2.5 py-1 rounded-md bg-[#00E5FF]/10 border border-[#00E5FF]/20 flex items-center gap-1.5">
@@ -220,26 +219,26 @@ class BetterReportWizard(models.TransientModel):
                     </button>
                 </header>
 
-                <div class="p-10 overflow-y-auto flex-1 z-10">
+                <div class="p-10 overflow-y-auto flex-1 z-10 w-full">
                     
                     <div class="grid grid-cols-12 gap-6 mb-6">
                         <div class="col-span-8 flex flex-col gap-6">
-                            <div class="prism-card spotlight rounded-[24px] p-8 h-full flex flex-col">
+                            <div class="prism-card spotlight rounded-[24px] p-8 h-full flex flex-col w-full">
                                 <div class="flex items-center justify-between mb-4 relative z-10">
                                     <h3 class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em]">Loaded Dimensions</h3>
                                     <span class="text-[10px] text-[#52525B] font-mono">DRAG TO REORDER</span>
                                 </div>
-                                <div id="selected-columns" class="flex-1 flex flex-wrap gap-3 relative z-10 p-4 border-2 border-dashed border-white/[0.05] rounded-xl bg-white/[0.01] transition-colors">
+                                <div id="selected-columns" class="flex-1 flex flex-wrap gap-3 relative z-10 p-4 border-2 border-dashed border-white/[0.05] rounded-xl bg-white/[0.01] transition-colors w-full">
                                     </div>
                             </div>
                         </div>
 
                         <div class="col-span-4 flex flex-col gap-6">
-                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
+                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden w-full">
                                 <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Total Records</span>
                                 <div class="text-[56px] font-semibold tracking-tighter text-white mt-1 relative z-10 leading-none" id="kpi-pos">0</div>
                             </div>
-                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
+                            <div class="prism-card spotlight rounded-[24px] p-8 flex-1 flex flex-col justify-center relative overflow-hidden w-full">
                                 <span class="text-[11px] font-medium text-[#71717A] uppercase tracking-[0.2em] relative z-10">Capital Aggregation</span>
                                 <div class="flex items-baseline gap-2 mt-2 relative z-10">
                                     <span class="text-[13px] font-mono text-[#71717A] tracking-widest">VAL</span>
@@ -249,12 +248,12 @@ class BetterReportWizard(models.TransientModel):
                         </div>
                     </div>
 
-                    <div class="prism-card spotlight rounded-[24px] overflow-hidden flex flex-col">
+                    <div class="prism-card spotlight rounded-[24px] flex flex-col w-full max-w-full">
                         <div class="px-8 py-5 border-b border-white/[0.04] flex justify-between items-center bg-black/10 relative z-10">
                             <h2 class="text-[14px] font-semibold text-white tracking-wide">Output Matrix</h2>
                         </div>
-                        <div class="overflow-x-auto relative z-10">
-                            <table class="w-full text-left whitespace-nowrap">
+                        <div class="overflow-x-auto w-full relative z-10">
+                            <table class="w-full text-left whitespace-nowrap min-w-max">
                                 <thead id="table-head"><tr></tr></thead>
                                 <tbody id="table-body"></tbody>
                             </table>
@@ -364,7 +363,7 @@ class BetterReportWizard(models.TransientModel):
                             pill.classList.remove('dragging');
                             const newOrder = Array.from(columnContainer.children).map(p => p.dataset.header);
                             renderTable(newOrder);
-                            updateSidebarLegend(newOrder); // Update sidebar on drop
+                            updateSidebarLegend(newOrder); 
                         });
 
                         columnContainer.appendChild(pill);
