@@ -2,13 +2,27 @@ from odoo import models, fields
 
 class BetterReport(models.Model):
     _name = 'better.report'
-    _description = 'Custom Report Template'
+    _description = 'Financial Report Engine'
 
     name = fields.Char(string='Report Name', required=True)
-    model_id = fields.Many2one('ir.model', string='Data Model', required=True, ondelete='cascade')
-    model_name = fields.Char(related='model_id.model', store=True)
-    field_ids = fields.Many2many('ir.model.fields', string='Columns', domain="[('model_id', '=', model_id)]")
-    record_limit = fields.Integer(string='Row Limit', default=500)
+    
+    report_type = fields.Selection([
+        ('ar_aging', 'A/R Aging Summary'),
+        ('ap_aging', 'A/P Aging Summary'),
+        ('bank_statement', 'Bank Statement'),
+        ('pl', 'Profit and Loss Statement'),
+        ('balance_sheet', 'Balance Sheet'),
+        ('trial_balance', 'Trial Balance'),
+        ('soa', 'Statement of Account'),
+        ('gl', 'General Ledger'),
+        ('partner_ledger', 'Partner Ledger'),
+    ], string='Report Type', required=True, default='trial_balance')
+
+    date_from = fields.Date(string='Start Date')
+    date_to = fields.Date(string='End Date')
+    
+    allowed_group_ids = fields.Many2many('res.groups', string='Allowed User Groups', 
+                                         help="Leave blank to allow all users to see this report.")
 
     def action_run_report(self):
         self.ensure_one()
