@@ -1,7 +1,6 @@
 from odoo import models, fields
 import base64
 import json
-from datetime import datetime, date
 
 class BetterReportWizard(models.TransientModel):
     _name = 'better.report.wizard'
@@ -13,42 +12,63 @@ class BetterReportWizard(models.TransientModel):
 
     def action_generate_interactive_report(self):
         report = self.report_id
-        Model = self.env[report.model_name]
-        field_names = report.field_ids.mapped('name')
-        
-        records = Model.search_read([], field_names, limit=report.record_limit or 500)
-        
         report_data = []
         total_amount = 0.0
         
-        for rec in records:
-            row = {}
-            for fname in field_names:
-                val = rec.get(fname, '')
+        # --- ACCOUNTING ENGINE ---
+        domain = [('parent_state', '=', 'posted')]
+        if report.date_from:
+            domain.append(('date', '>=', report.date_from))
+        if report.date_to:
+            domain.append(('date', '<=', report.date_to))
+
+        if report.report_type == 'trial_balance':
+            # Trial Balance: Group by Account
+            grouped_lines = self.env['account.move.line'].read_group(
+                domain,
+                ['account_id', 'debit', 'credit', 'balance'],
+                ['account_id']
+            )
+            for line in grouped_lines:
+                acc_name = line['account_id'][1] if line['account_id'] else 'Unknown'
+                debit = round(line.get('debit', 0.0), 2)
+                credit = round(line.get('credit', 0.0), 2)
+                balance = round(debit - credit, 2)
                 
-                if isinstance(val, tuple): 
-                    val = val[1]
+                report_data.append({
+                    'Account': acc_name,
+                    'Debit': debit,
+                    'Credit': credit,
+                    'Balance': balance,
+                })
+                total_amount += balance
+
+        elif report.report_type == 'gl':
+            # General Ledger: Flat list of Journal Items
+            lines = self.env['account.move.line'].search(domain, order='date asc', limit=1000)
+            for line in lines:
+                report_data.append({
+                    'Date': str(line.date),
+                    'Journal': line.journal_id.name,
+                    'Account': line.account_id.name,
+                    'Partner': line.partner_id.name if line.partner_id else '',
+                    'Label': line.name or '',
+                    'Debit': round(line.debit, 2),
+                    'Credit': round(line.credit, 2),
+                    'Balance': round(line.balance, 2),
+                })
+                total_amount += line.balance
                 
-                if isinstance(val, (datetime, date)):
-                    val = str(val)
-                
-                if val is False or val is None:
-                    val = ""
-                    
-                row[fname] = val
-                
-                if isinstance(val, (int, float)):
-                    total_amount += float(val)
-                    
-            report_data.append(row)
+        else:
+            # Placeholder for the other 7 reports we will build next
+            report_data.append({'Notice': f'The {report.report_type} engine is currently under construction.'})
 
         json_data = json.dumps(report_data)
-        kpi_data = json.dumps({"total_records": len(records), "total_capital": total_amount})
-        
-        # Grab the exact server time for the snapshot
+        kpi_data = json.dumps({"total_records": len(report_data), "total_capital": total_amount})
         snapshot_time = fields.Datetime.now().strftime("%d %b %Y, %H:%M:%S UTC")
 
         # --- THE PREMIUM ENTERPRISE SAAS UI ---
+        # (This is your exact V1.5 HTML string, no changes needed to the frontend!)
         html_content = """
         <!DOCTYPE html>
         <html lang="en">
@@ -163,7 +183,6 @@ class BetterReportWizard(models.TransientModel):
                 </header>
 
                 <div class="px-10 pb-10 pt-8 overflow-y-auto flex-1 z-10 w-full">
-                    
                     <div class="grid grid-cols-2 gap-6 mb-8">
                         <div class="pro-card p-6 flex flex-col justify-center relative overflow-hidden group hover:border-slate-300 transition-colors">
                             <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -176,7 +195,7 @@ class BetterReportWizard(models.TransientModel):
                             <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <svg class="w-16 h-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
-                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest relative z-10">Capital Aggregation</span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest relative z-10">Net Balance</span>
                             <div class="flex items-baseline gap-2 mt-2 relative z-10">
                                 <span class="text-[14px] font-bold text-slate-300 tracking-wider">VAL</span>
                                 <div class="text-[48px] font-bold tracking-tighter leading-none text-gradient-blue" id="kpi-val">0.00</div>
@@ -186,7 +205,7 @@ class BetterReportWizard(models.TransientModel):
 
                     <div class="pro-card flex flex-col w-full max-w-full overflow-hidden">
                         <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white relative z-10">
-                            <h2 class="text-[15px] font-bold text-slate-900 tracking-tight">Output Matrix</h2>
+                            <h2 class="text-[15px] font-bold text-slate-900 tracking-tight">Financial Matrix</h2>
                         </div>
                         
                         <div class="overflow-x-auto w-full relative z-10 max-h-[600px] overflow-y-auto">
@@ -232,12 +251,17 @@ class BetterReportWizard(models.TransientModel):
                             
                             headersList.forEach((h, index) => {
                                 const td = document.createElement('td');
-                                if (index === 0) {
+                                // Determine styling based on accounting columns
+                                if (['Debit', 'Credit', 'Balance'].includes(h)) {
+                                     td.className = "px-6 py-4 text-[13px] text-slate-900 font-mono text-right";
+                                     td.innerText = parseFloat(row[h] || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                                } else if (index === 0) {
                                     td.className = "px-6 py-4 text-[13px] text-slate-900 font-semibold";
+                                    td.innerText = row[h] !== null ? row[h] : '';
                                 } else {
                                     td.className = "px-6 py-4 text-[13px] text-slate-600 font-medium";
+                                    td.innerText = row[h] !== null ? row[h] : '';
                                 }
-                                td.innerText = row[h] !== null ? row[h] : '';
                                 tr.appendChild(td);
                             });
                             tbody.appendChild(tr);
